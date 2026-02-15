@@ -1,0 +1,25 @@
+[project]
+name = "mnist-project"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "torch",
+  "torchvision",
+  "torchaudio",
+  "matplotlib>=3.10.8",
+  "tensorboard>=2.20.0",
+  "torchmetrics>=1.8.2",
+  "torchinfo>=1.8.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu121", marker = "sys_platform == 'win32' or sys_platform == 'linux'" }]
+torchvision = [{ index = "pytorch-cu121", marker = "sys_platform == 'win32' or sys_platform == 'linux'" }]
+torchaudio = [{ index = "pytorch-cu121", marker = "sys_platform == 'win32' or sys_platform == 'linux'" }]
