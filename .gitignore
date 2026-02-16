@@ -11,4 +11,6 @@ wheels/
 
 data/
 runs/
+CIFAR.pth
 resnet_cifar10.pth
+TBplot/
