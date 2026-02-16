@@ -11,3 +11,4 @@ wheels/
 
 data/
 runs/
+resnet_cifar10.pth
