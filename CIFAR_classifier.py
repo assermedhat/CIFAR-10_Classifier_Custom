@@ -29,9 +29,10 @@ class CNN(nn.Module):
         self.fc2=nn.Linear(512,128)
         self.fc3=nn.Linear(128,10)
         self.pool=nn.MaxPool2d(2)
+        self.dropout=nn.Dropout(p=0.5)
     
     def forward(self,inputs):
-        #layer 1 (Conv -> BN -> pool)
+        #layer 1 (Conv -> BN -> Activation -> pool)
         x=self.conv1(inputs)
         x=F.relu(self.BN1(x))
         x=self.pool(x)
@@ -47,8 +48,10 @@ class CNN(nn.Module):
         x=torch.flatten(x,1)
         #layer 4
         x=F.relu(self.fc1(x))
+        x=self.dropout(x)
         #layer 5
         x=F.relu(self.fc2(x))
+        x=self.dropout(x)
         #layer 6
         x=self.fc3(x)
         return x
@@ -57,7 +60,7 @@ class Initialize:
     def __init__(self,batch_size=64,):
         self.writer=SummaryWriter()
         self.batch_size=batch_size
-        self.transforms=transforms.Compose([
+        self.train_transforms=transforms.Compose([
             transforms.RandomCrop(32,padding=2),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
@@ -65,11 +68,16 @@ class Initialize:
                                  std=(0.24703233,0.24348505, 0.26158768))
         ])
         
+        self.test_transforms=transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=(0.49139968, 0.48215827 ,0.44653124),
+                                 std=(0.24703233,0.24348505, 0.26158768))
+        ])
         
         self.train_data=datasets.CIFAR10(
             root="data",
             train=True,
-            transform = self.transforms,
+            transform = self.train_transforms,
             download=True
         )
         
@@ -77,7 +85,7 @@ class Initialize:
             root="data",
             train=False,
             download=True,
-            transform=self.transforms
+            transform=self.test_transforms
         )
 
         self.train_dataloader=DataLoader(self.train_data,
@@ -88,18 +96,22 @@ class Initialize:
                                         batch_size=batch_size,
                                         shuffle=True)
         
+    def start(self):
         print(f"Training set size = {len(self.train_data)}\nTest set size= {len(self.test_data)}")
         print(f"total no of batches = {len(self.train_dataloader)}")
+        return self.train_dataloader,self.test_dataloader,self.writer
 
-class Orchestrator(Initialize):
-    def __init__(self, model,lr=0.001,l2_reg=0,retrain=False,checkpoint_path="CIFAR.pth",batch_size=64):
-        super().__init__()
+class Orchestrator:
+    def __init__(self,writer, train_dataloader,test_dataloader,model,lr=0.001,l2_reg=0,retrain=False,checkpoint_path="CIFAR.pth",batch_size=64):
+        self.train_dataloader=train_dataloader
+        self.test_dataloader=test_dataloader
         self.model=model
         self.retrain=retrain
         self.loss_fn=nn.CrossEntropyLoss()
-        self.opt=torch.optim.Adam(self.model.parameters(),lr=lr,weight_decay=l2_reg)
+        self.opt=torch.optim.AdamW(self.model.parameters(),lr=lr,weight_decay=l2_reg)
         self.chkpt=checkpoint_path
         self.metric=torchmetrics.Accuracy(task="multiclass",num_classes=10).to(device)
+        self.writer=writer
     
     def train_one_epoch(self):
         self.model.train()
@@ -196,7 +208,9 @@ class Orchestrator(Initialize):
 
 if __name__ == "__main__":
     model=CNN().to(device)
-    orch=Orchestrator(model,lr=0.001,retrain=True,l2_reg=0.0009)
+    data=Initialize()
+    train_dataloader,test_dataloader,writer=data.start()
+    orch=Orchestrator(writer,train_dataloader,test_dataloader,model,lr=0.001,retrain=True,l2_reg=0.0009)
     orch.fit(epochs=100)
     test_loss,test_acc=orch.evaluate()
     print(f"Final test loss= {test_loss:.4f}\nFinal test acc = {test_acc*100:0.2f}")
