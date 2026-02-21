@@ -20,6 +20,6 @@ jobs:
 
     - name: Build and Push
       run: |
-        IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:$(date +%s)
+        IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/cifar-classifier:$(date +%s)
         docker build . --file Dockerfile --tag $IMAGE
         docker push $IMAGE
