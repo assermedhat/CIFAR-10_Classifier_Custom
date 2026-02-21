@@ -7,12 +7,19 @@ on:
     branches: [ "master" ]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and Push
+      run: |
+        IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/my-image-name:$(date +%s)
+        docker build . --file Dockerfile --tag $IMAGE
+        docker push $IMAGE
