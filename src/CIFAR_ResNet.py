@@ -4,32 +4,12 @@ import torchvision
 from torch.utils.data import Dataset,DataLoader
 from torchvision import datasets
 from torchvision import transforms
-from CIFAR_classifier import Orchestrator,device
+from src.CIFAR_classifier import Orchestrator,device
 from torch.utils.tensorboard import SummaryWriter
 from torchinfo import summary
 import torch.nn.functional as F
+from src.model import ResNet18
 
-class ResNet18(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.model = torchvision.models.resnet18(weights=torchvision.models.ResNet18_Weights.DEFAULT)
-        #freezing model weights
-        for param in self.model.parameters():
-            param.requires_grad = False
-        
-        for p in self.model.layer4.parameters():
-            p.requires_grad=True
-        in_ftrs=self.model.fc.in_features
-        self.model.fc=nn.Sequential(
-            nn.Linear(in_ftrs,512),
-            nn.ReLU(),
-            nn.Dropout(p=0.5),
-            nn.Linear(512,10))
-        self.model.conv1 = nn.Conv2d(in_channels=3,out_channels=64,kernel_size=3,stride=1,padding=1,bias=False)
-        self.model.maxpool=nn.Identity()
-    def forward(self,input):
-        logits=self.model(input)
-        return logits
 
 class Initialize_ResNet:
     def __init__(self):
@@ -63,7 +43,7 @@ class Initialize_ResNet:
         
 
 class Main(Orchestrator):
-    def __init__(self,writer,train_dataloader,test_dataloader,model,lr=0.001,l2_reg=0.0,retrain=False,checkpoint="resnet_cifar10.pth"):
+    def __init__(self,writer,train_dataloader,test_dataloader,model,lr=0.001,l2_reg=0.0,retrain=False,checkpoint="models/resnet_cifar10.pth"):
         super().__init__(writer,train_dataloader,test_dataloader,model=model,lr=lr,l2_reg=l2_reg,retrain=retrain,checkpoint_path=checkpoint)
         
         self.opt=torch.optim.SGD(model.parameters(),lr=lr,momentum=0.9,weight_decay=l2_reg)
@@ -78,7 +58,7 @@ class Main(Orchestrator):
 
 
 if __name__ == "__main__":
-    model = ResNet18().to(device)
+    model = ResNet18(pretrained=True).to(device)
     data=Initialize_ResNet()
     train_data,test_data,writer=data.start()
     main=Main(writer,train_data,test_data,model=model,lr=0.1,retrain=False,l2_reg=0.0005)

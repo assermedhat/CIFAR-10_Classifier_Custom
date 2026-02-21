@@ -8,7 +8,6 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import Dataset,DataLoader
 from torchvision import datasets
 from torchvision import transforms
-import matplotlib.pyplot as plt
 import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -203,6 +202,8 @@ class Orchestrator:
             ax.axis("off")
 
         self.writer.add_figure("Test Predictions", fig, global_step=step)
+    
+
 
 
 
