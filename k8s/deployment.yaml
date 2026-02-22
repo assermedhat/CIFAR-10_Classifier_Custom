@@ -17,6 +17,7 @@ spec:
     spec:
       containers:
         - name: cifarclassifier-api
-          image: assermedhat/cifar-classifier
+          image: assermedhat/cifar-classifier:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080

@@ -1,8 +1,10 @@
 name: Minikube CD
 
 on:
-  push:
-    branches: [ main ]
+  workflow_run:
+    workflows: ["Docker Image CI"]
+    types:
+      - completed
 
 jobs:
   deploy:
@@ -24,16 +26,14 @@ jobs:
           sudo mv minikube /usr/local/bin/
 
       - name: Start minikube
-        run: minikube start --driver=docker
-
-      - name: Build image inside minikube
-        run: |
-          eval $(minikube -p minikube docker-env)
-          docker build -t assermedhat/cifar-classifier:latest .
+        run: | 
+          minikube start --driver=docker
+          kubectl get nodes
 
       - name: Deploy manifests
         run: |
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
+          kubectl rollout restart deployment/classifier-deployment
           kubectl rollout status deployment/classifier-deployment --timeout=180s
           kubectl get pods,svc
