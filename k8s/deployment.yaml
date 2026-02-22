@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: classifier-deployment
+  labels:
+    app: cifarclassifier-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cifarclassifier-api
+
+  template:
+    metadata:
+      labels:
+        app: cifarclassifier-api
+    spec:
+      containers:
+        - name: cifarclassifier-api
+          image: assermedhat/cifar-classifier
+          ports:
+            - containerPort: 8080
